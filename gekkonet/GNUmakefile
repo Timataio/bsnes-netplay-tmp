@@ -1,0 +1,39 @@
+gekkonet.path ?= .
+
+gekkonet.src := \
+	src/gekkonet.cpp \
+	src/backend.cpp \
+	src/event.cpp \
+	src/gekko.cpp \
+	src/input.cpp \
+	src/net.cpp \
+	src/player.cpp \
+	src/storage.cpp \
+	src/sync.cpp
+
+gekkonet.include := \
+	-I$(gekkonet.path)/include \
+	-I$(gekkonet.path)/thirdparty \
+	-I$(gekkonet.path)/thirdparty/asio
+
+gekkonet.objects := $(gekkonet.src:src/%.cpp=obj/gekkonet-%.o)
+
+gekkonet.cxxflags := -DGEKKONET_STATIC
+
+obj/gekkonet-%.o: $(gekkonet.path)/src/%.cpp
+ifeq ($(platform),windows)
+	@if not exist "$(subst /,\,$(dir $@))" mkdir "$(subst /,\,$(dir $@))"
+else
+	@mkdir -p $(dir $@)
+endif
+	$(compiler) -c -o $@ $< $(flags) $(gekkonet.include) $(gekkonet.cxxflags)
+
+ifndef compiler
+	$(error "compiler variable must be defined by the including Makefile")
+endif
+
+gekkonet.options :=
+
+ifeq ($(platform),windows)
+	gekkonet.options += -lws2_32
+endif

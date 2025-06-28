@@ -7,6 +7,9 @@ include $(hiro.path)/GNUmakefile
 ruby.path := ../ruby
 include $(ruby.path)/GNUmakefile
 
+gekkonet.path := ../gekkonet
+include $(gekkonet.path)/GNUmakefile
+
 objects += ui-bsnes ui-program ui-input ui-presentation
 objects += ui-settings ui-tools ui-resource
 objects := $(objects:%=obj/%.o)
@@ -19,9 +22,9 @@ obj/ui-settings.o: $(ui)/settings/settings.cpp
 obj/ui-tools.o: $(ui)/tools/tools.cpp
 obj/ui-resource.o: $(ui)/resource/resource.cpp
 
-all: $(hiro.objects) $(ruby.objects) $(objects)
+all: $(hiro.objects) $(ruby.objects) $(gekkonet.objects) $(objects)
 	$(info Linking out/$(name) ...)
-	+@$(compiler) -o out/$(name) $(hiro.objects) $(ruby.objects) $(objects) $(hiro.options) $(ruby.options) $(options)
+	+@$(compiler) -o out/$(name) $(hiro.objects) $(ruby.objects) $(gekkonet.objects) $(objects) $(hiro.options) $(ruby.options) $(gekkonet.options) $(options)
 ifeq ($(platform),macos)
 	rm -rf out/$(name).app
 	mkdir -p out/$(name).app/Contents/MacOS/
