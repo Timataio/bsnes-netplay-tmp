@@ -9,6 +9,7 @@ include $(ruby.path)/GNUmakefile
 
 gekkonet.path := ../gekkonet
 include $(gekkonet.path)/GNUmakefile
+flags := $(flags) $(gekkonet.flags)
 
 objects += ui-bsnes ui-program ui-input ui-presentation
 objects += ui-settings ui-tools ui-resource

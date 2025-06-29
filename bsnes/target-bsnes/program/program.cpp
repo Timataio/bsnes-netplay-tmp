@@ -7,6 +7,7 @@
 #include "states.cpp"
 #include "movies.cpp"
 #include "rewind.cpp"
+#include "netplay.cpp"
 #include "video.cpp"
 #include "audio.cpp"
 #include "input.cpp"
@@ -70,6 +71,9 @@ auto Program::create() -> void {
   if(startFullScreen && emulator->loaded()) {
     toggleVideoFullScreen();
   }
+
+  netplayStart(); //todo
+
   Application::onMain({&Program::main, this});
 }
 

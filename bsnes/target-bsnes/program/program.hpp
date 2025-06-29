@@ -88,6 +88,21 @@ struct Program : Lock, Emulator::Platform {
   auto rewindReset() -> void;
   auto rewindRun() -> void;
 
+  // netplay.cpp
+  struct Netplay {
+    struct Peer {
+      string nickname;
+      struct connection {
+        string ip;
+        uint port = 0;
+      } conn;
+    };
+    Peer self;
+    vector<Peer> peers;
+    GekkoSession* session = nullptr;
+  } netplay;
+  auto netplayStart() -> void;
+
   //video.cpp
   auto updateVideoDriver(Window parent) -> void;
   auto updateVideoExclusive() -> void;

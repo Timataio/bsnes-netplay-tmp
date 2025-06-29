@@ -13,6 +13,8 @@ extern unique_pointer<Emulator::Interface> emulator;
 #include <filter/filter.hpp>
 #include <lzma/lzma.hpp>
 
+#include <gekkonet/include/gekkonet.h>
+
 #include <nall/instance.hpp>
 #include <nall/decode/rle.hpp>
 #include <nall/decode/zip.hpp>

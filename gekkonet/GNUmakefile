@@ -18,7 +18,7 @@ gekkonet.include := \
 
 gekkonet.objects := $(gekkonet.src:src/%.cpp=obj/gekkonet-%.o)
 
-gekkonet.cxxflags := -DGEKKONET_STATIC
+gekkonet.flags := $(gekkonet.include) -DGEKKONET_STATIC
 
 obj/gekkonet-%.o: $(gekkonet.path)/src/%.cpp
 ifeq ($(platform),windows)
@@ -26,13 +26,13 @@ ifeq ($(platform),windows)
 else
 	@mkdir -p $(dir $@)
 endif
-	$(compiler) -c -o $@ $< $(flags) $(gekkonet.include) $(gekkonet.cxxflags)
+	$(compiler) -c -o $@ $< $(flags)
 
 ifndef compiler
 	$(error "compiler variable must be defined by the including Makefile")
 endif
 
-gekkonet.options :=
+gekkonet.options := 
 
 ifeq ($(platform),windows)
 	gekkonet.options += -lws2_32
