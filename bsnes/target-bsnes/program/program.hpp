@@ -126,6 +126,9 @@ struct Program : Lock, Emulator::Platform {
       struct connection {
         string ip;
         uint16 port = 0;
+        auto toString() -> string {
+          return string(ip, ":", port);
+        }
       } conn;
     };
     struct Buttons {
@@ -157,7 +160,7 @@ struct Program : Lock, Emulator::Platform {
     GekkoSession* session = nullptr;
   } netplay;
   auto netplayMode(Netplay::Mode) -> void;
-  auto netplayStart(uint8 numPlayers, uint16 port) -> void;
+  auto netplayStart(uint8 numPlayers, uint16 port, uint8 local) -> void;
   auto netplayStop() -> void;
   auto netplayRun() -> bool;
   auto netplayPollLocalInput(Netplay::Buttons& localInput) -> void;

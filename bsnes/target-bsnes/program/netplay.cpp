@@ -1,4 +1,4 @@
-auto Program::netplayStart(uint8 numPlayers, uint16 port) -> void {
+auto Program::netplayStart(uint8 numPlayers, uint16 port, uint8 local) -> void {
     if(netplay.mode != Netplay::Mode::Inactive || numPlayers == 0 || port == 0)
         return;
 
@@ -6,6 +6,7 @@ auto Program::netplayStart(uint8 numPlayers, uint16 port) -> void {
 
     netplay.peers.reset();
     netplay.inputs.reset();
+    netplay.states.reset();
 
     for(int i = 0; i < numPlayers; i++) {
         netplay.inputs.append(Netplay::Buttons());
@@ -23,14 +24,44 @@ auto Program::netplayStart(uint8 numPlayers, uint16 port) -> void {
     gekko_start(netplay.session, &netplay.config);
     gekko_net_adapter_set(netplay.session, gekko_default_adapter(port));
 
-    auto peer = Netplay::Peer();
-    peer.id = gekko_add_actor(netplay.session, LocalPlayer, nullptr);
-    peer.nickname = "Local";
-    peer.conn.ip = "localhost";
-    peer.conn.port = port;
+    auto peer1 = Netplay::Peer();
+    auto peer2 = Netplay::Peer();
 
-    netplay.peers.append(peer);
-    
+    if(local == 0) {
+        peer1.id = gekko_add_actor(netplay.session, LocalPlayer, nullptr);
+        peer1.nickname = "P1";
+        peer1.conn.ip = "localhost";
+        peer1.conn.port = port;
+
+        peer2.nickname = "P2";
+        peer2.conn.ip = "127.0.0.1";
+        peer2.conn.port = 4444;
+        
+        auto remAddr = peer2.conn.toString();
+        auto remote = GekkoNetAddress{ (void*)remAddr.data(), remAddr.size() };
+        peer2.id = gekko_add_actor(netplay.session, RemotePlayer, &remote);
+    } else {
+        peer1.nickname = "P1";
+        peer1.conn.ip = "127.0.0.1";
+        peer1.conn.port = 3333;
+
+        auto remAddr = peer1.conn.toString();
+        auto remote = GekkoNetAddress{ (void *)remAddr.data(), remAddr.size() };
+        peer1.id = gekko_add_actor(netplay.session, RemotePlayer, &remote);
+
+        peer2.id = gekko_add_actor(netplay.session, LocalPlayer, nullptr);
+        peer2.nickname = "P2";
+        peer2.conn.ip = "localhost";
+        peer2.conn.port = port;
+    }
+
+    netplay.peers.append(peer1);
+    netplay.peers.append(peer2);
+
+    for(int i = 0; i < netplay.peers.size(); i++) {
+        print("P:", netplay.peers[i].conn.toString(), "\n");
+    }
+
     netplayMode(Netplay::Running);
 }
 
@@ -58,11 +89,26 @@ auto Program::netplayRun() -> bool {
 
     gekko_network_poll(netplay.session);
 
-    Netplay::Buttons input = {};
-    netplayPollLocalInput(input);
-    gekko_add_local_input(netplay.session, netplay.peers[0].id, &input.u.value);
-
+    for(int i = 0; i < netplay.peers.size(); i++) {
+        if(netplay.peers[i].conn.ip != "localhost") continue;
+        Netplay::Buttons input = {};
+        netplayPollLocalInput(input);
+        gekko_add_local_input(netplay.session, netplay.peers[i].id, &input);
+    }
+    
     int count = 0;
+    auto events = gekko_session_events(netplay.session, &count);
+    for (int i = 0; i < count; i++) {
+        auto event = events[i];
+        int type = event->type;
+        print("EV:", type, "\n");
+        if (event->type == PlayerDisconnected) {
+            auto disco = event->data.disconnected;
+            print("Disconnect detected, player:", disco.handle, "\n");
+        }
+    }
+
+    count = 0;
     auto updates = gekko_update_session(netplay.session, &count);
     for (int i = 0; i < count; i++) {
         auto ev = updates[i];
@@ -75,7 +121,7 @@ auto Program::netplayRun() -> bool {
             serial = emulator->serialize(0);
             frame = ev->data.save.frame % netplay.states.size();
             netplay.states[frame].set(serial.data(), serial.size());
-            print("Saved frame:", ev->data.save.frame," mod:", frame, " size:", serial.size(),"\n" );
+            // print("Saved frame:", ev->data.save.frame," mod:", frame, " size:", serial.size(),"\n" );
             // pass the frame number so we can later use it to get the right state
             *ev->data.save.checksum = 0;
             *ev->data.save.state_len = sizeof(int32);
@@ -88,9 +134,7 @@ auto Program::netplayRun() -> bool {
             print("Load frame:", ev->data.load.frame, "\n");
             break;
         case AdvanceEvent:
-            for (int j = 0; j < netplay.config.num_players; j++) {
-                memcpy(&netplay.inputs[j].u.value, &ev->data.adv.inputs[j * sizeof(int16)], sizeof(int16));
-            }
+            memcpy(netplay.inputs.data(), ev->data.adv.inputs, sizeof(Netplay::Buttons) * netplay.config.num_players);
             emulator->run();
             break;
         }
@@ -128,6 +172,6 @@ auto Program::netplayGetInput(uint port, uint button) -> int16 {
     case Netplay::SnesButton::L: return netplay.inputs[port].u.btn.l;
     case Netplay::SnesButton::R: return netplay.inputs[port].u.btn.r;
     default:
-        return 88;
+        return 0;
     }
 }

@@ -177,8 +177,11 @@ auto Presentation::create() -> void {
   stateManager.setIcon(Icon::Application::FileManager).setText("State Manager ...").onActivate([&] { toolsWindow.show(2); });
   manifestViewer.setIcon(Icon::Emblem::Text).setText("Manifest Viewer ...").onActivate([&] { toolsWindow.show(3); });
   netplayMenu.setText(tr("Netplay")).setEnabled(program.netplay.mode == 0);
-  startNetplay.setIcon(Icon::Prompt::Question).setText({tr("Start")}).onActivate([&] {
-    program.netplayStart(1, 3434);
+  startNetplayP1.setIcon(Icon::Prompt::Question).setText({tr("Start P1")}).onActivate([&] {
+    program.netplayStart(2, 3333, 0);
+  });
+  startNetplayP2.setIcon(Icon::Prompt::Question).setText({tr("Start P2")}).onActivate([&] {
+    program.netplayStart(2, 4444, 1);
   });
   helpMenu.setText(tr("Help"));
   aboutSameBoy.setIcon(Icon::Prompt::Question).setText({tr("About SameBoy"), " ..."}).onActivate([&] {

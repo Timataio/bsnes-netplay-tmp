@@ -118,7 +118,8 @@ struct Presentation : Window {
       MenuItem stateManager{&toolsMenu};
       MenuItem manifestViewer{&toolsMenu};
     Menu netplayMenu{&menuBar};
-        MenuItem startNetplay{&netplayMenu};
+        MenuItem startNetplayP1{&netplayMenu};
+        MenuItem startNetplayP2{&netplayMenu};
     Menu helpMenu{&menuBar};
       MenuItem aboutSameBoy{&helpMenu};
       MenuItem aboutBsnes{&helpMenu};
