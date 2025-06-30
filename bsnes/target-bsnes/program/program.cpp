@@ -72,7 +72,7 @@ auto Program::create() -> void {
     toggleVideoFullScreen();
   }
 
-  netplayStart(); //todo
+  netplayStart(1, 3434);
 
   Application::onMain({&Program::main, this});
 }
@@ -104,6 +104,8 @@ auto Program::main() -> void {
     if(settings.emulator.runAhead.frames == 0) viewportRefresh();
     return;
   }
+
+  if(netplayRun()) return;
 
   rewindRun();
 

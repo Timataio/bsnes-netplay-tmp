@@ -90,18 +90,54 @@ struct Program : Lock, Emulator::Platform {
 
   // netplay.cpp
   struct Netplay {
+    enum Mode : uint { Inactive, Setup, Running } mode = Mode::Inactive;
     struct Peer {
+      uint8 id = 0;
       string nickname;
       struct connection {
         string ip;
-        uint port = 0;
+        uint16 port = 0;
       } conn;
     };
-    Peer self;
+
+    struct Buttons {
+      union u {
+        struct btn {
+          uint b      : 1; 
+          uint y      : 1; 
+          uint select : 1;
+          uint start  : 1;
+          uint up     : 1;
+          uint down   : 1;
+          uint left   : 1;
+          uint right  : 1;
+          uint a      : 1;
+          uint x      : 1;
+          uint l      : 1;
+          uint r      : 1;
+        } btn;
+        int16 value;
+      } u;
+    };
+
+    enum SnesButton: uint {
+      Up, Down, Left, Right, B, A, Y, X, L, R, Select, Start,
+    };
+
+    vector<Buttons> inputs;
+
+    vector<serializer> states;
     vector<Peer> peers;
+    
+    GekkoConfig config = {};
     GekkoSession* session = nullptr;
   } netplay;
-  auto netplayStart() -> void;
+  auto netplayMode(Netplay::Mode) -> void;
+  auto netplayStart(uint8 numPlayers, uint16 port) -> void;
+  auto netplayStop() -> void;
+  auto netplayRun() -> bool;
+  auto netplayPollLocalInput(Netplay::Buttons& localInput) -> void;
+  auto netplayGetInput(uint port, uint button) -> int16;
 
   //video.cpp
   auto updateVideoDriver(Window parent) -> void;

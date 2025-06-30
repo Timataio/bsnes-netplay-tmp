@@ -265,6 +265,11 @@ auto Program::inputPoll(uint port, uint device, uint input) -> int16 {
       value = mapping->poll();
     }
   }
+
+  if(netplay.mode == Netplay::Running) {
+    return netplayGetInput(port, input);
+  }
+
   if(movie.mode == Movie::Mode::Recording) {
     movie.input.append(value);
   } else if(movie.mode == Movie::Mode::Playing) {
