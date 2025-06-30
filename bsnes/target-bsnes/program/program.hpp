@@ -91,6 +91,35 @@ struct Program : Lock, Emulator::Platform {
   // netplay.cpp
   struct Netplay {
     enum Mode : uint { Inactive, Setup, Running } mode = Mode::Inactive;
+    // rollback savestate  
+    struct SaveState {
+      ~SaveState() { clear(); }
+      auto data() -> const uint8_t* { return _ptr; }
+      auto set(const uint8_t* data, uint size) -> void { 
+          if(size == 0) return;
+          if(_capacity < size) {
+            if(_ptr) delete _ptr;
+            _ptr = new uint8_t[size];
+            memcpy(_ptr, data, size);
+            _capacity = size;
+            _size = size;
+            return;
+          }
+          memcpy(_ptr, data, size);
+          _size = size;
+      }
+      auto size() -> uint { return _size; }
+      auto clear() -> void {
+        if(_ptr) delete _ptr;
+        _size = 0;
+        _capacity = 0;
+        _ptr = nullptr;
+      }
+      private:
+        uint _capacity = 0, _size = 0;
+        uint8_t* _ptr = nullptr;
+    };
+    // netplay peer
     struct Peer {
       uint8 id = 0;
       string nickname;
@@ -99,7 +128,6 @@ struct Program : Lock, Emulator::Platform {
         uint16 port = 0;
       } conn;
     };
-
     struct Buttons {
       union u {
         struct btn {
@@ -119,16 +147,12 @@ struct Program : Lock, Emulator::Platform {
         int16 value;
       } u;
     };
-
     enum SnesButton: uint {
       Up, Down, Left, Right, B, A, Y, X, L, R, Select, Start,
     };
-
+    vector<SaveState> states;
     vector<Buttons> inputs;
-
-    vector<serializer> states;
     vector<Peer> peers;
-    
     GekkoConfig config = {};
     GekkoSession* session = nullptr;
   } netplay;

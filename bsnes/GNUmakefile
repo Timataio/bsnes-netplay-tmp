@@ -25,6 +25,7 @@ ifeq ($(platform),windows)
     options += -luuid -lkernel32 -luser32 -lgdi32 -lcomctl32 -lcomdlg32 -lshell32
     options += -Wl,-enable-auto-import
     options += -Wl,-enable-runtime-pseudo-reloc
+    options += -mconsole
   else ifeq ($(binary),library)
     options += -shared
   endif

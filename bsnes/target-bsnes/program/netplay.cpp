@@ -1,6 +1,5 @@
-auto Program::netplayStart(uint8 numPlayers, uint16 port) -> void
-{
-    if (netplay.mode != Netplay::Mode::Inactive || numPlayers == 0 || port == 0)
+auto Program::netplayStart(uint8 numPlayers, uint16 port) -> void {
+    if(netplay.mode != Netplay::Mode::Inactive || numPlayers == 0 || port == 0)
         return;
 
     netplayMode(Netplay::Setup);
@@ -8,8 +7,7 @@ auto Program::netplayStart(uint8 numPlayers, uint16 port) -> void
     netplay.peers.reset();
     netplay.inputs.reset();
 
-    for (int i = 0; i < numPlayers; i++)
-    {
+    for(int i = 0; i < numPlayers; i++) {
         netplay.inputs.append(Netplay::Buttons());
     }
 
@@ -18,6 +16,8 @@ auto Program::netplayStart(uint8 numPlayers, uint16 port) -> void
     netplay.config.state_size = sizeof(int32);
     netplay.config.max_spectators = 0;
     netplay.config.input_prediction_window = 0;
+
+    netplay.states.resize(netplay.config.input_prediction_window + 2);
 
     gekko_create(&netplay.session);
     gekko_start(netplay.session, &netplay.config);
@@ -30,17 +30,20 @@ auto Program::netplayStart(uint8 numPlayers, uint16 port) -> void
     peer.conn.port = port;
 
     netplay.peers.append(peer);
-
+    
     netplayMode(Netplay::Running);
 }
 
-auto Program::netplayMode(Netplay::Mode mode) -> void
-{
+auto Program::netplayMode(Netplay::Mode mode) -> void {
+    if(netplay.mode == mode) return;
+    if(mode == Netplay::Running) {
+        emulator->configure("Hacks/Entropy", "None");
+        if(emulator->loaded()) emulator->power();
+    }
     netplay.mode = mode;
 }
 
-auto Program::netplayStop() -> void
-{
+auto Program::netplayStop() -> void {
     if (netplay.mode == Netplay::Mode::Inactive)
         return;
 
@@ -49,8 +52,7 @@ auto Program::netplayStop() -> void
     gekko_destroy(netplay.session);
 }
 
-auto Program::netplayRun() -> bool
-{
+auto Program::netplayRun() -> bool {
     if (netplay.mode != Netplay::Mode::Running)
         return false;
 
@@ -62,16 +64,28 @@ auto Program::netplayRun() -> bool
 
     int count = 0;
     auto updates = gekko_update_session(netplay.session, &count);
-    for (int i = 0; i < count; i++)
-    {
+    for (int i = 0; i < count; i++) {
         auto ev = updates[i];
-        switch (ev->type)
-        {
+        int frame = 0;
+        auto serial = serializer();
+
+        switch (ev->type) {
         case SaveEvent:
-            //showMessage({"Save Event, Frame:", ev->data.save.frame, "\n"});
+            // save the state ourselves
+            serial = emulator->serialize(0);
+            frame = ev->data.save.frame % netplay.states.size();
+            netplay.states[frame].set(serial.data(), serial.size());
+            print("Saved frame:", ev->data.save.frame," mod:", frame, " size:", serial.size(),"\n" );
+            // pass the frame number so we can later use it to get the right state
+            *ev->data.save.checksum = 0;
+            *ev->data.save.state_len = sizeof(int32);
+            memcpy(ev->data.save.state, &ev->data.save.frame, sizeof(int32));
             break;
         case LoadEvent:
-            //showMessage({"Load Event, Frame:", ev->data.load.frame, "\n"});
+            frame = ev->data.load.frame % netplay.states.size();
+            serial = serializer(netplay.states[frame].data(), netplay.states[frame].size());
+            emulator->unserialize(serial);
+            print("Load frame:", ev->data.load.frame, "\n");
             break;
         case AdvanceEvent:
             for (int j = 0; j < netplay.config.num_players; j++) {
@@ -83,8 +97,7 @@ auto Program::netplayRun() -> bool
     }
     return true;
 }
-auto Program::netplayPollLocalInput(Netplay::Buttons &localInput) -> void
-{
+auto Program::netplayPollLocalInput(Netplay::Buttons &localInput) -> void {
     inputManager.poll();
     if (auto mapping = inputManager.mapping(0, 1, Netplay::SnesButton::B)) localInput.u.btn.b = mapping->poll();
     if (auto mapping = inputManager.mapping(0, 1, Netplay::SnesButton::Y)) localInput.u.btn.y = mapping->poll();
@@ -100,34 +113,20 @@ auto Program::netplayPollLocalInput(Netplay::Buttons &localInput) -> void
     if (auto mapping = inputManager.mapping(0, 1, Netplay::SnesButton::R)) localInput.u.btn.r = mapping->poll();
 }
 
-auto Program::netplayGetInput(uint port, uint button) -> int16
-{
-    switch (button)
-    {
-    case Netplay::SnesButton::B:
-        return netplay.inputs[port].u.btn.b;
-    case Netplay::SnesButton::Y:
-        return netplay.inputs[port].u.btn.y;
-    case Netplay::SnesButton::Select:
-        return netplay.inputs[port].u.btn.select;
-    case Netplay::SnesButton::Start:
-        return netplay.inputs[port].u.btn.start;
-    case Netplay::SnesButton::Up:
-        return netplay.inputs[port].u.btn.up;
-    case Netplay::SnesButton::Down:
-        return netplay.inputs[port].u.btn.down;
-    case Netplay::SnesButton::Left:
-        return netplay.inputs[port].u.btn.left;
-    case Netplay::SnesButton::Right:
-        return netplay.inputs[port].u.btn.right;
-    case Netplay::SnesButton::A:
-        return netplay.inputs[port].u.btn.a;
-    case Netplay::SnesButton::X:
-        return netplay.inputs[port].u.btn.x;
-    case Netplay::SnesButton::L:
-        return netplay.inputs[port].u.btn.l;
-    case Netplay::SnesButton::R:
-        return netplay.inputs[port].u.btn.r;
+auto Program::netplayGetInput(uint port, uint button) -> int16 {
+    switch (button) {
+    case Netplay::SnesButton::B: return netplay.inputs[port].u.btn.b;
+    case Netplay::SnesButton::Y: return netplay.inputs[port].u.btn.y;
+    case Netplay::SnesButton::Select: return netplay.inputs[port].u.btn.select;
+    case Netplay::SnesButton::Start: return netplay.inputs[port].u.btn.start;
+    case Netplay::SnesButton::Up: return netplay.inputs[port].u.btn.up;
+    case Netplay::SnesButton::Down: return netplay.inputs[port].u.btn.down;
+    case Netplay::SnesButton::Left: return netplay.inputs[port].u.btn.left;
+    case Netplay::SnesButton::Right: return netplay.inputs[port].u.btn.right;
+    case Netplay::SnesButton::A: return netplay.inputs[port].u.btn.a;
+    case Netplay::SnesButton::X: return netplay.inputs[port].u.btn.x;
+    case Netplay::SnesButton::L: return netplay.inputs[port].u.btn.l;
+    case Netplay::SnesButton::R: return netplay.inputs[port].u.btn.r;
     default:
         return 88;
     }

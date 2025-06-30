@@ -72,8 +72,6 @@ auto Program::create() -> void {
     toggleVideoFullScreen();
   }
 
-  netplayStart(1, 3434);
-
   Application::onMain({&Program::main, this});
 }
 
