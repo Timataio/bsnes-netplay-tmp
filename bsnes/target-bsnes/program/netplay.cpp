@@ -68,6 +68,7 @@ auto Program::netplayStart(uint8 numPlayers, uint16 port, uint8 local) -> void {
 auto Program::netplayMode(Netplay::Mode mode) -> void {
     if(netplay.mode == mode) return;
     if(mode == Netplay::Running) {
+        settings.input.defocus = "Block";
         emulator->configure("Hacks/Entropy", "None");
         if(emulator->loaded()) emulator->power();
     }
