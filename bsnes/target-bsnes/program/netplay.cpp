@@ -16,7 +16,7 @@ auto Program::netplayStart(uint8 numPlayers, uint16 port, uint8 local) -> void {
     netplay.config.input_size = sizeof(Netplay::Buttons);
     netplay.config.state_size = sizeof(int32);
     netplay.config.max_spectators = 0;
-    netplay.config.input_prediction_window = 0;
+    netplay.config.input_prediction_window = 1;
 
     netplay.states.resize(netplay.config.input_prediction_window + 2);
 
@@ -79,15 +79,14 @@ auto Program::netplayStop() -> void {
         return;
 
     netplayMode(Netplay::Inactive);
-
     gekko_destroy(netplay.session);
 }
 
 auto Program::netplayRun() -> bool {
-    if (netplay.mode != Netplay::Mode::Running)
-        return false;
-
     gekko_network_poll(netplay.session);
+    
+    if(netplay.mode != Netplay::Mode::Running || !emulator->loaded())
+        return false;
 
     for(int i = 0; i < netplay.peers.size(); i++) {
         if(netplay.peers[i].conn.ip != "localhost") continue;
@@ -104,7 +103,7 @@ auto Program::netplayRun() -> bool {
         print("EV:", type, "\n");
         if (event->type == PlayerDisconnected) {
             auto disco = event->data.disconnected;
-            print("Disconnect detected, player:", disco.handle, "\n");
+            showMessage({"Peer Disconnected:", disco.handle});
         }
     }
 
@@ -112,7 +111,7 @@ auto Program::netplayRun() -> bool {
     auto updates = gekko_update_session(netplay.session, &count);
     for (int i = 0; i < count; i++) {
         auto ev = updates[i];
-        int frame = 0;
+        int frame = 0, cframe = 0;
         auto serial = serializer();
 
         switch (ev->type) {
@@ -128,12 +127,22 @@ auto Program::netplayRun() -> bool {
             memcpy(ev->data.save.state, &ev->data.save.frame, sizeof(int32));
             break;
         case LoadEvent:
+            print("Load frame:", ev->data.load.frame, "\n");
             frame = ev->data.load.frame % netplay.states.size();
             serial = serializer(netplay.states[frame].data(), netplay.states[frame].size());
             emulator->unserialize(serial);
-            print("Load frame:", ev->data.load.frame, "\n");
+            // we are gonna start rolling back.
+            emulator->setRunAhead(true);
             break;
         case AdvanceEvent:
+            if(emulator->runAhead()) {
+                cframe = count - 1;
+                // check whether this is the last advance event in the queue.
+                if (i == cframe || updates[cframe]->type == SaveEvent && i == cframe - 1) {
+                    // we want to leave runahead run the current frame.
+                    emulator->setRunAhead(false);
+                }
+            }
             memcpy(netplay.inputs.data(), ev->data.adv.inputs, sizeof(Netplay::Buttons) * netplay.config.num_players);
             emulator->run();
             break;

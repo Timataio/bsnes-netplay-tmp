@@ -160,6 +160,7 @@ static GekkoNetAdapter default_sock {
 
 GekkoNetAdapter* gekko_default_adapter(unsigned short port) {
     // in case this has been called before.
+    _socket->close();
     delete _socket;
 
     // setup socket
