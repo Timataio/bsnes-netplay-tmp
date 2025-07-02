@@ -1,5 +1,6 @@
-auto Program::netplayStart(uint8 numPlayers, uint16 port, uint8 local) -> void {
-    if(netplay.mode != Netplay::Mode::Inactive || numPlayers == 0 || port == 0)
+static uint16 testIps[] = {1111, 2222, 8331, 8332, 8333, 8334, 8335, 8336};
+auto Program::netplayStart(uint8 numPlayers, uint8 local) -> void {
+    if(netplay.mode != Netplay::Mode::Inactive || numPlayers == 0)
         return;
 
     netplayMode(Netplay::Setup);
@@ -15,35 +16,57 @@ auto Program::netplayStart(uint8 numPlayers, uint16 port, uint8 local) -> void {
     netplay.config.num_players = numPlayers;
     netplay.config.input_size = sizeof(Netplay::Buttons);
     netplay.config.state_size = sizeof(int32);
-    netplay.config.max_spectators = 0;
+    netplay.config.max_spectators = 6;
     netplay.config.input_prediction_window = 10;
+    netplay.config.spectator_delay = 90;
 
     netplay.states.resize(netplay.config.input_prediction_window + 2);
 
     gekko_create(&netplay.session);
     gekko_start(netplay.session, &netplay.config);
-    gekko_net_adapter_set(netplay.session, gekko_default_adapter(port));
-
-    auto peer1 = Netplay::Peer();
-    auto peer2 = Netplay::Peer();
+    gekko_net_adapter_set(netplay.session, gekko_default_adapter(testIps[local]));
 
     if(local == 0) {
+        auto peer1 = Netplay::Peer();
+        auto peer2 = Netplay::Peer();
+
         peer1.id = gekko_add_actor(netplay.session, LocalPlayer, nullptr);
         peer1.nickname = "P1";
         peer1.conn.ip = "localhost";
-        peer1.conn.port = port;
+        peer1.conn.port = testIps[0];
 
         peer2.nickname = "P2";
         peer2.conn.ip = "127.0.0.1";
-        peer2.conn.port = 4444;
+        peer2.conn.port = testIps[1];
         
         auto remAddr = peer2.conn.toString();
         auto remote = GekkoNetAddress{ (void*)remAddr.data(), remAddr.size() };
         peer2.id = gekko_add_actor(netplay.session, RemotePlayer, &remote);
-    } else {
+
+        netplay.peers.append(peer1);
+        netplay.peers.append(peer2);
+
+        // add the expected spectators
+        for(int i = 0; i < netplay.config.max_spectators; i++) {
+            auto specPeer = Netplay::Peer();
+            
+            specPeer.nickname = "Spectator";
+            specPeer.conn.ip = "127.0.0.1";
+            specPeer.conn.port = testIps[2 + i];
+        
+            auto specAddr = specPeer.conn.toString();
+            auto spec = GekkoNetAddress{ (void*)specAddr.data(), specAddr.size() };
+            specPeer.id = gekko_add_actor(netplay.session, Spectator, &spec);
+
+            netplay.peers.append(specPeer);
+        }
+    } else if (local == 1){
+        auto peer1 = Netplay::Peer();
+        auto peer2 = Netplay::Peer();
+
         peer1.nickname = "P1";
         peer1.conn.ip = "127.0.0.1";
-        peer1.conn.port = 3333;
+        peer1.conn.port = testIps[0];
 
         auto remAddr = peer1.conn.toString();
         auto remote = GekkoNetAddress{ (void *)remAddr.data(), remAddr.size() };
@@ -52,11 +75,23 @@ auto Program::netplayStart(uint8 numPlayers, uint16 port, uint8 local) -> void {
         peer2.id = gekko_add_actor(netplay.session, LocalPlayer, nullptr);
         peer2.nickname = "P2";
         peer2.conn.ip = "localhost";
-        peer2.conn.port = port;
-    }
+        peer2.conn.port = testIps[1];
 
-    netplay.peers.append(peer1);
-    netplay.peers.append(peer2);
+        netplay.peers.append(peer1);
+        netplay.peers.append(peer2);
+    }else{
+        auto peer1 = Netplay::Peer();
+
+        peer1.nickname = "P1";
+        peer1.conn.ip = "127.0.0.1";
+        peer1.conn.port = testIps[0];
+
+        auto remAddr = peer1.conn.toString();
+        auto remote = GekkoNetAddress{ (void *)remAddr.data(), remAddr.size() };
+        peer1.id = gekko_add_actor(netplay.session, RemotePlayer, &remote);
+
+        netplay.peers.append(peer1);
+    }
 
     for(int i = 0; i < netplay.peers.size(); i++) {
         print("P:", netplay.peers[i].conn.toString(), "\n");
@@ -89,20 +124,15 @@ auto Program::netplayStop() -> void {
 }
 
 auto Program::netplayRun() -> bool {
+    if(netplay.session) gekko_network_poll(netplay.session);
     if (netplay.mode != Netplay::Mode::Running) return false;
+
     netplay.counter++;
 
-    gekko_network_poll(netplay.session);
-    float framesAhead = gekko_frames_ahead(netplay.session);
-    print("Frames ahead:", framesAhead, "\n");
-
-    if(framesAhead > 0.75f && netplay.counter % 120 == 0) {
+    if(gekko_frames_ahead(netplay.session) >= 1.5f && netplay.counter % 60 == 0) {
         // rift syncing first attempt
-        // kinda hacky.
-        auto state = emulator->serialize(0);
-        emulator->run();
-        state.setMode(serializer::Mode::Load);
-        emulator->unserialize(state);
+        // kinda hacky. there's prolly a better way but im clueless.
+        netplayHaltFrame();
         return true;
     }
 
@@ -202,4 +232,12 @@ auto Program::netplayGetInput(uint port, uint button) -> int16 {
     default:
         return 0;
     }
+}
+
+auto Program::netplayHaltFrame() -> void
+{
+    auto state = emulator->serialize(0);
+    emulator->run();
+    state.setMode(serializer::Mode::Load);
+    emulator->unserialize(state);
 }

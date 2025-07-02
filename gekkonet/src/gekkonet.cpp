@@ -74,9 +74,9 @@ void gekko_network_poll(GekkoSession* session)
 #ifndef GEKKONET_NO_ASIO
 
 #ifdef _WIN32
-    #ifndef _WIN32_WINNT
-        #define _WIN32_WINNT 0x0A00
-    #endif
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0A00
+#endif
 #endif // _WIN32
 
 #define ASIO_STANDALONE 
@@ -154,7 +154,7 @@ static void asio_free(void* data_ptr) {
     delete data_ptr;
 }
 
-static GekkoNetAdapter default_sock {
+static GekkoNetAdapter default_sock{
     asio_send,
     asio_receive,
     asio_free
@@ -166,10 +166,11 @@ GekkoNetAdapter* gekko_default_adapter(unsigned short port) {
         try {
             _socket->shutdown(asio::socket_base::shutdown_type::shutdown_both);
             _socket->close();
-        } catch(const std::exception& e) {
+        }
+        catch (const std::exception& e) {
             std::cerr << e.what() << '\n';
         }
-        
+
         delete _socket;
         _socket = nullptr;
     }
