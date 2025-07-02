@@ -74,7 +74,9 @@ void gekko_network_poll(GekkoSession* session)
 #ifndef GEKKONET_NO_ASIO
 
 #ifdef _WIN32
-#define _WIN32_WINNT 0x0A00
+    #ifndef _WIN32_WINNT
+        #define _WIN32_WINNT 0x0A00
+    #endif
 #endif // _WIN32
 
 #define ASIO_STANDALONE 
@@ -87,7 +89,7 @@ static asio::error_code _ec;
 static asio::io_context _io_ctx;
 static asio::ip::udp::endpoint _remote;
 static std::vector<GekkoNetResult*> _results;
-static asio::ip::udp::socket* _socket;
+static asio::ip::udp::socket* _socket = nullptr;
 
 static asio::ip::udp::endpoint STOE(const std::string& str) {
     std::string::size_type colon_pos = str.find(':');
@@ -160,7 +162,17 @@ static GekkoNetAdapter default_sock {
 
 GekkoNetAdapter* gekko_default_adapter(unsigned short port) {
     // in case this has been called before.
-    delete _socket;
+    if (_socket) {
+        try {
+            _socket->shutdown(asio::socket_base::shutdown_type::shutdown_both);
+            _socket->close();
+        } catch(const std::exception& e) {
+            std::cerr << e.what() << '\n';
+        }
+        
+        delete _socket;
+        _socket = nullptr;
+    }
 
     // setup socket
     _socket = new asio::ip::udp::socket(_io_ctx, asio::ip::udp::endpoint(asio::ip::udp::v4(), port));

@@ -158,6 +158,7 @@ struct Program : Lock, Emulator::Platform {
     vector<Peer> peers;
     GekkoConfig config = {};
     GekkoSession* session = nullptr;
+    uint counter = 0;
   } netplay;
   auto netplayMode(Netplay::Mode) -> void;
   auto netplayStart(uint8 numPlayers, uint16 port, uint8 local) -> void;
