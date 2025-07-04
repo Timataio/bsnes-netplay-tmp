@@ -204,6 +204,9 @@ auto Presentation::create() -> void {
   stopNetplay.setIcon(Icon::Prompt::Question).setText({tr("Stop")}).onActivate([&] {
     program.netplayStop();
   });
+  stopNetplay.setIcon(Icon::Prompt::Question).setText({tr("Stop")}).onActivate([&] {
+    program.netplayStop();
+  });
   helpMenu.setText(tr("Help"));
   aboutSameBoy.setIcon(Icon::Prompt::Question).setText({tr("About SameBoy"), " ..."}).onActivate([&] {
     AboutDialog()

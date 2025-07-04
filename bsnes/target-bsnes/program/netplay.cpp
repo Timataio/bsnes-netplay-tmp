@@ -151,7 +151,7 @@ auto Program::netplayRun() -> bool {
         print("EV:", type, "\n");
         if (event->type == PlayerDisconnected) {
             auto disco = event->data.disconnected;
-            print("Disconnect detected, player:", disco.handle, "\n");
+            showMessage({"Peer Disconnected:", disco.handle});
         }
     }
 
@@ -175,6 +175,7 @@ auto Program::netplayRun() -> bool {
             memcpy(ev->data.save.state, &ev->data.save.frame, sizeof(int32));
             break;
         case LoadEvent:
+            print("Load frame:", ev->data.load.frame, "\n");
             frame = ev->data.load.frame % netplay.states.size();
             serial = serializer(netplay.states[frame].data(), netplay.states[frame].size());
             emulator->unserialize(serial);
