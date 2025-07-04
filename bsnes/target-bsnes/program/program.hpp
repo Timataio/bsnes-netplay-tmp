@@ -158,13 +158,15 @@ struct Program : Lock, Emulator::Platform {
     vector<Peer> peers;
     GekkoConfig config = {};
     GekkoSession* session = nullptr;
+    uint counter = 0;
   } netplay;
   auto netplayMode(Netplay::Mode) -> void;
-  auto netplayStart(uint8 numPlayers, uint16 port, uint8 local) -> void;
+  auto netplayStart(uint8 numPlayers, uint8 local) -> void;
   auto netplayStop() -> void;
   auto netplayRun() -> bool;
   auto netplayPollLocalInput(Netplay::Buttons& localInput) -> void;
   auto netplayGetInput(uint port, uint button) -> int16;
+  auto netplayHaltFrame() -> void;
 
   //video.cpp
   auto updateVideoDriver(Window parent) -> void;
