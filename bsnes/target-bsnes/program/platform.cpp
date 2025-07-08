@@ -244,7 +244,8 @@ auto Program::videoFrame(const uint16* data, uint pitch, uint width, uint height
   if(current != previous) {
     previous = current;
     if(netplay.mode == Netplay::Running) {
-      showFrameRate({netplay.stats.avg_ping," MS || ",frameCounter * (1 + emulator->frameSkip()), " FPS"});
+      showMessage({(int)netplay.stats.avg_ping," MS"});
+      showFrameRate({frameCounter * (1 + emulator->frameSkip()), " FPS"});
     } else {
       showFrameRate({frameCounter * (1 + emulator->frameSkip()), " FPS"});
     }

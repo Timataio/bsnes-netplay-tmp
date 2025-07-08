@@ -196,8 +196,8 @@ struct NetplayWindow : Window {
   struct Config {
     uint16 localPort = 0;
     uint8 localPlayer = 0;
-    uint8 rollbackframes = 0;
-    uint8 localDelay = 0;
+    uint8 rollbackframes = 8;
+    uint8 localDelay = 1;
     string remoteAddress = {};
     vector<string> spectators = {};
   } config {};

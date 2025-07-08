@@ -29,6 +29,7 @@ auto Program::netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay
     netplay.config.max_spectators = spectators.size();
     netplay.config.input_prediction_window = rollback;
     netplay.config.spectator_delay = 90;
+    netplay.config.limited_saving = true;
 
     netplay.states.resize(netplay.config.input_prediction_window + 2);
 
@@ -99,6 +100,9 @@ auto Program::netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay
     gekko_set_local_delay(netplay.session, local, delay);
 
     netplayMode(Netplay::Running);
+
+    netplay.poller.init(netplay.session);
+    netplay.poller.start();
 }
 
 auto Program::netplayStop() -> void {
@@ -106,91 +110,107 @@ auto Program::netplayStop() -> void {
         return;
 
     netplayMode(Netplay::Inactive);
+
+    netplay.poller.stop();
+
     gekko_destroy(netplay.session);
 
     netplay.session = nullptr;
     netplay.config = {};
 
     netplay.counter = 0;
+    netplay.stallCounter = 0;
+
+    inputSettings.pauseEmulation.setChecked();
 }
 
 auto Program::netplayRun() -> bool {
-    if(netplay.session) gekko_network_poll(netplay.session);
     if (netplay.mode != Netplay::Mode::Running) return false;
 
     netplay.counter++;
 
-    if(gekko_frames_ahead(netplay.session) >= 1.5f && netplay.counter % 60 == 0) {
-        // rift syncing first attempt
-        // kinda hacky. there's prolly a better way but im clueless.
-        netplayHaltFrame();
-        return true;
-    }
-
-    for(int i = 0; i < netplay.peers.size(); i++) {
-        if(netplay.peers[i].conn.addr != "localhost"){
-            if(netplay.peers[i].nickname != "Spectator"){
-                gekko_network_stats(netplay.session, i, &netplay.stats);
-            }
-            continue;
-        };
-        Netplay::Buttons input = {};
-        netplayPollLocalInput(input);
-        gekko_add_local_input(netplay.session, netplay.peers[i].id, &input);
-    }
-    
-    int count = 0;
-    auto events = gekko_session_events(netplay.session, &count);
-    for(int i = 0; i < count; i++) {
-        auto event = events[i];
-        int type = event->type;
-        print("EV:", type, "\n");
-        if (event->type == PlayerDisconnected) {
-            auto disco = event->data.disconnected;
-            showMessage({"Peer Disconnected:", disco.handle});
+    netplay.poller.with_session([this](GekkoSession* session) {
+        if(gekko_frames_ahead(session) >= 0.5f && netplay.counter % 60 == 0) {
+            // rift syncing first attempt
+            // kinda hacky. there's prolly a better way but im clueless.
+            // mute when halting
+            netplayHaltFrame();
+            return true;
         }
-    }
 
-    count = 0;
-    auto updates = gekko_update_session(netplay.session, &count);
-    for (int i = 0; i < count; i++) {
-        auto ev = updates[i];
-        int frame = 0, cframe = 0;
-        auto serial = serializer();
-
-        switch (ev->type) {
-        case SaveEvent:
-            // save the state ourselves
-            serial = emulator->serialize(0);
-            frame = ev->data.save.frame % netplay.states.size();
-            netplay.states[frame].set(serial.data(), serial.size());
-            // print("Saved frame:", ev->data.save.frame," mod:", frame, " size:", serial.size(),"\n" );
-            // pass the frame number so we can later use it to get the right state
-            *ev->data.save.checksum = 0; // maybe can be helpful later.
-            *ev->data.save.state_len = sizeof(int32);
-            memcpy(ev->data.save.state, &ev->data.save.frame, sizeof(int32));
-            break;
-        case LoadEvent:
-            print("Load frame:", ev->data.load.frame, "\n");
-            frame = ev->data.load.frame % netplay.states.size();
-            serial = serializer(netplay.states[frame].data(), netplay.states[frame].size());
-            emulator->unserialize(serial);
-            program.mute |= Mute::Always;
-            emulator->setRunAhead(true);
-            break;
-        case AdvanceEvent:
-            if(emulator->runAhead()) {
-                cframe = count - 1;
-                if(cframe == i || (updates[cframe]->type == SaveEvent && i == cframe - 1)) {
-                    emulator->setRunAhead(false);
-                    program.mute &= ~Mute::Always;
+        for(int i = 0; i < netplay.peers.size(); i++) {
+            if(netplay.peers[i].conn.addr != "localhost"){
+                if(netplay.peers[i].nickname != "Spectator"){
+                    gekko_network_stats(session, netplay.peers[i].id, &netplay.stats);
                 }
-            }
-            memcpy(netplay.inputs.data(), ev->data.adv.inputs, sizeof(Netplay::Buttons) * netplay.config.num_players);
-            emulator->run();
-            break;
+                continue;
+            };
+            Netplay::Buttons input = {};
+            netplayPollLocalInput(input);
+            gekko_add_local_input(session, netplay.peers[i].id, &input);
         }
-    }
+        
+        int count = 0;
+        auto events = gekko_session_events(session, &count);
+        for(int i = 0; i < count; i++) {
+            auto event = events[i];
+            int type = event->type;
+            print("EV:", type, "\n");
+            if (event->type == PlayerDisconnected) {
+                auto disco = event->data.disconnected;
+                showMessage({"Peer Disconnected:", disco.handle});
+            }
+        }
+
+        count = 0;
+        auto updates = gekko_update_session(session, &count);
+        for (int i = 0; i < count; i++) {
+            auto ev = updates[i];
+            int frame = 0, cframe = 0;
+            auto serial = serializer();
+
+            switch (ev->type) {
+            case SaveEvent:
+                // save the state ourselves
+                serial = emulator->serialize(0);
+                frame = ev->data.save.frame % netplay.states.size();
+                netplay.states[frame].set(serial.data(), serial.size());
+                // pass the frame number so we can later use it to get the right state
+                *ev->data.save.checksum = 0; // maybe can be helpful later.
+                *ev->data.save.state_len = sizeof(int32);
+                memcpy(ev->data.save.state, &ev->data.save.frame, sizeof(int32));
+                break;
+            case LoadEvent:
+                //print("Load frame:", ev->data.load.frame, "\n");
+                frame = ev->data.load.frame % netplay.states.size();
+                serial = serializer(netplay.states[frame].data(), netplay.states[frame].size());
+                emulator->unserialize(serial);
+                program.mute |= Mute::Always;
+                emulator->setRunAhead(true);
+                break;
+            case AdvanceEvent:
+                if(emulator->runAhead()) {
+                    cframe = count - 1;
+                    if(cframe == i || (updates[cframe]->type == SaveEvent && i == cframe - 1)) {
+                        emulator->setRunAhead(false);
+                        program.mute &= ~Mute::Always;
+                    }
+                }
+                memcpy(netplay.inputs.data(), ev->data.adv.inputs, sizeof(Netplay::Buttons) * netplay.config.num_players);
+                emulator->run();
+                break;
+            }
+        }
+
+        if(count == 0) {
+            netplay.stallCounter++;
+            if (netplay.stallCounter > 10) program.mute |= Mute::Always;
+        }else{
+            netplay.stallCounter = 0;
+        }
+
+        return true;
+    });
     return true;
 }
 auto Program::netplayPollLocalInput(Netplay::Buttons &localInput) -> void {

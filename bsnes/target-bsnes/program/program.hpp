@@ -91,6 +91,38 @@ struct Program : Lock, Emulator::Platform {
   // netplay.cpp
   struct Netplay {
     enum Mode : uint { Inactive, Running } mode = Mode::Inactive;
+    // network poller
+    struct Poller {
+      nall::thread pollThread;
+      GekkoSession* session = nullptr;
+      std::atomic<bool> running = false;
+      std::mutex session_mutex;
+      
+      ~Poller() { if (running) stop(); }
+      auto init(GekkoSession* session) -> void { this->session = session; }
+      auto start() -> void {
+          running = true;
+          pollThread = nall::thread::create([](uintptr p) { ((Poller*)p)->run(p); }, (uintptr)this);
+      }
+      auto stop() -> void { running = false; pollThread.join(); }
+      
+      template<typename Func>
+      auto with_session(Func&& func) -> decltype(func(session)) {
+          std::lock_guard<std::mutex> lock(session_mutex);
+          return func(session);
+      }
+      
+    private:
+      auto run(uintptr param) -> void {
+          while(running) {
+              {
+                std::lock_guard<std::mutex> lock(session_mutex);
+                if(session) gekko_network_poll(session);
+              }
+              std::this_thread::sleep_for(std::chrono::microseconds(100));
+          }
+      }
+    } poller;
     // rollback savestate  
     struct SaveState {
       ~SaveState() { clear(); }
@@ -156,6 +188,7 @@ struct Program : Lock, Emulator::Platform {
     GekkoConfig config = {};
     GekkoSession* session = nullptr;
     uint counter = 0;
+    uint stallCounter = 0;
   } netplay;
   auto netplayMode(Netplay::Mode) -> void;
   auto netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay, string remoteAddr, vector<string>& spectators ) -> void;

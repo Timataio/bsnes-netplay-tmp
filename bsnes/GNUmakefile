@@ -2,7 +2,7 @@ target := bsnes
 binary := application
 build := performance
 openmp := true
-local := true
+local := false
 flags += -I. -I..
 
 # in order for this to work, obj/lzma.o must be omitted or bsnes will hang on startup.
@@ -14,7 +14,7 @@ endif
 
 # binaries built with this flag are faster, but are not portable to multiple machines.
 ifeq ($(local),true)
-#  flags += -march=native
+  flags += -march=native
 endif
 
 nall.path := ../nall
@@ -25,7 +25,6 @@ ifeq ($(platform),windows)
     options += -luuid -lkernel32 -luser32 -lgdi32 -lcomctl32 -lcomdlg32 -lshell32
     options += -Wl,-enable-auto-import
     options += -Wl,-enable-runtime-pseudo-reloc
-    options += -mconsole
   else ifeq ($(binary),library)
     options += -shared
   endif

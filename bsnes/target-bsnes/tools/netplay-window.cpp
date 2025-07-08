@@ -1,16 +1,18 @@
 auto NetplayWindow::create() -> void {
-    layout.setPadding(5_sx);
+    layout.setPadding(6_sx);
 
     portLabel.setText("Local Port:");
-    portValue.onChange([&] { config.localPort = portValue.text().integer();});
+    portValue.onChange([&] { config.localPort = portValue.text().strip().integer();});
 
     rollbackframeLabel.setText({"Max Rollback: ", config.rollbackframes});
+    rollbackframeValue.setPosition(config.rollbackframes);
     rollbackframeValue.setLength(11).onChange([&] { 
         config.rollbackframes = rollbackframeValue.position();
         rollbackframeLabel.setText({"Max Rollback: ", config.rollbackframes}); 
     });
 
     delayLabel.setText({"Delay: ", config.localDelay});
+    delayValue.setPosition(config.localDelay);
     delayValue.setLength(16).onChange([&] { 
         config.localDelay = delayValue.position();
         delayLabel.setText({"Delay: ", config.localDelay}); 
@@ -23,14 +25,14 @@ auto NetplayWindow::create() -> void {
 
     remoteLabel.setText("Remote Player Address:");
     remoteAddressValue.onChange([&] { 
-        config.remoteAddress = remoteAddressValue.text();
-        print("Remote Address: ", remoteAddressValue.text(), "\n");
+        config.remoteAddress = remoteAddressValue.text().strip();
+        //print("Remote Address: ", remoteAddressValue.text(), "\n");
     });
 
     spectatorLabel.setText("Spectator Addresses:");
     spectatorValue.onChange([&] { 
-        config.spectators = spectatorValue.text().split(",");
-        print("Spectators: ", spectatorValue.text(), "\n");
+        config.spectators = spectatorValue.text().strip().split(",");
+       // print("Spectators: ", spectatorValue.text(), "\n");
     });
 
     if(config.localPlayer == 0) p1Select.setChecked();
@@ -38,6 +40,18 @@ auto NetplayWindow::create() -> void {
     if(config.localPlayer == 2) specSelect.setChecked();
 
     btnStart.setText("Start Session").setIcon(Icon::Media::Play).onActivate([&] {
+        if(portValue.text().strip().size() == 0) {
+            MessageDialog("Local port number is required")
+            .setTitle("Netplay Setup Error")
+            .error();
+            return;
+        }
+        if(remoteAddressValue.text().strip().size() == 0) {
+            MessageDialog("Remote player address is required")
+            .setTitle("Netplay Setup Error")
+            .error();
+            return;
+        }
         program.netplayStart(config.localPort, config.localPlayer, config.rollbackframes, config.localDelay, config.remoteAddress, config.spectators);
         doClose(); 
     });
