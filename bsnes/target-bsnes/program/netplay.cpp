@@ -130,11 +130,13 @@ auto Program::netplayRun() -> bool {
     netplay.counter++;
 
     netplay.poller.with_session([this](GekkoSession* session) {
-        if(gekko_frames_ahead(session) >= 0.5f && netplay.counter % 60 == 0) {
+        if(gekko_frames_ahead(session) >= 1.0f && netplay.counter % 60 == 0) {
             // rift syncing first attempt
             // kinda hacky. there's prolly a better way but im clueless.
-            // mute when halting
+            auto volume = Emulator::audio.volume();
+            Emulator::audio.setVolume(volume * 0.3f);
             netplayHaltFrame();
+            Emulator::audio.setVolume(volume);
             return true;
         }
 
@@ -155,10 +157,19 @@ auto Program::netplayRun() -> bool {
         for(int i = 0; i < count; i++) {
             auto event = events[i];
             int type = event->type;
-            print("EV:", type, "\n");
             if (event->type == PlayerDisconnected) {
                 auto disco = event->data.disconnected;
-                showMessage({"Peer Disconnected:", disco.handle});
+                showMessage({"Peer Disconnected: ", disco.handle});
+                continue;
+            }
+            if (event->type == PlayerConnected) {
+                auto conn = event->data.connected;
+                showMessage({"Peer Connected: ", conn.handle});
+                continue;
+            }
+            if (event->type == SessionStarted) {
+                showMessage({"Netplay Session Started"});
+                continue;
             }
         }
 
@@ -202,10 +213,12 @@ auto Program::netplayRun() -> bool {
             }
         }
 
+        // handle stalling due to various reasons including spectator wait.
         if(count == 0) {
             netplay.stallCounter++;
             if (netplay.stallCounter > 10) program.mute |= Mute::Always;
         }else{
+            if(netplay.stallCounter > 10) program.mute &= ~Mute::Always;
             netplay.stallCounter = 0;
         }
 

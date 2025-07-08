@@ -117,9 +117,9 @@ struct Program : Lock, Emulator::Platform {
           while(running) {
               {
                 std::lock_guard<std::mutex> lock(session_mutex);
-                if(session) gekko_network_poll(session);
+                gekko_network_poll(session);
               }
-              std::this_thread::sleep_for(std::chrono::microseconds(100));
+              std::this_thread::sleep_for(std::chrono::microseconds(250));
           }
       }
     } poller;
