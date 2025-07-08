@@ -26,7 +26,7 @@ ifeq ($(platform),windows)
 else
 	@mkdir -p $(dir $@)
 endif
-	$(compiler) -c -o $@ $< $(flags)
+	$(compiler) -c -o $@ $< $(gekkonet.flags)
 
 ifndef compiler
 	$(error "compiler variable must be defined by the including Makefile")

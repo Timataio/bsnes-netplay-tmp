@@ -192,6 +192,46 @@ public:
       VerticalLayout panelContainer{&panelLayout, Size{~0, ~0}};
 };
 
+struct NetplayWindow : Window {
+  struct Config {
+    uint16 localPort = 0;
+    uint8 localPlayer = 0;
+    uint8 rollbackframes = 0;
+    uint8 localDelay = 0;
+    string remoteAddress = {};
+    vector<string> spectators = {};
+  } config {};
+
+  auto create() -> void;
+  auto setVisible(bool visible = true) -> NetplayWindow&;
+  auto show() -> void;
+
+public:
+  VerticalLayout layout{this};
+    HorizontalLayout gameSettingsLayout{&layout, Size{~0, 0}};
+      Label rollbackframeLabel{&gameSettingsLayout, Size{85_sx, 0}};
+      HorizontalSlider rollbackframeValue{&gameSettingsLayout, Size{~0, 0}};
+      Label delayLabel{&gameSettingsLayout, Size{50_sx, 0}};
+      HorizontalSlider delayValue{&gameSettingsLayout, Size{~0, 0}};
+    HorizontalLayout playerSettingsLayout{&layout, Size{~0, 0}};
+      Label portLabel{&playerSettingsLayout, Size{0, 0}};
+      LineEdit portValue{&playerSettingsLayout, Size{~0, 0}};
+    HorizontalLayout playerLayout{&layout, Size{~0, 0}};
+      Label playerLabel{&playerLayout, Size{0, 0}};
+      RadioLabel specSelect{&playerLayout, Size{0, 0}};
+      RadioLabel p1Select{&playerLayout, Size{0, 0}};
+      RadioLabel p2Select{&playerLayout, Size{0, 0}};
+      Group playerGroup{&p1Select, &p2Select, &specSelect};
+    HorizontalLayout remoteLayout{&layout, Size{~0, 0}};
+      Label remoteLabel{&remoteLayout, Size{0, 0}};
+      LineEdit remoteAddressValue{&remoteLayout, Size{~0, 0}};
+    Label spectatorLabel{&layout, Size{0, 0}};
+    TextEdit spectatorValue{&layout, Size{~0, ~0}};
+    HorizontalLayout buttonLayout{&layout, Size{~0, 0}};
+      Button btnStart{&buttonLayout, Size{~0, 0}};
+      Button btnCancel{&buttonLayout, Size{~0, 0}};
+};
+
 namespace Instances { extern Instance<CheatDatabase> cheatDatabase; }
 extern CheatFinder cheatFinder;
 extern CheatDatabase& cheatDatabase;
@@ -204,3 +244,5 @@ extern StateManager stateManager;
 extern ManifestViewer manifestViewer;
 namespace Instances { extern Instance<ToolsWindow> toolsWindow; }
 extern ToolsWindow& toolsWindow;
+namespace Instances { extern Instance<NetplayWindow> netplayWindow; }
+extern NetplayWindow& netplayWindow;

@@ -1,4 +1,5 @@
 #include "../bsnes.hpp"
+#include "netplay-window.cpp"
 #include "cheat-finder.cpp"
 #include "cheat-editor.cpp"
 #include "state-manager.cpp"
@@ -15,6 +16,8 @@ StateManager stateManager;
 ManifestViewer manifestViewer;
 namespace Instances { Instance<ToolsWindow> toolsWindow; }
 ToolsWindow& toolsWindow = Instances::toolsWindow();
+namespace Instances { Instance<NetplayWindow> netplayWindow; } 
+NetplayWindow& netplayWindow = Instances::netplayWindow();
 
 struct ToolsHome : VerticalLayout {
   ToolsHome() {

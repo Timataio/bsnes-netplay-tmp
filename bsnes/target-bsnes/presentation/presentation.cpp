@@ -176,33 +176,16 @@ auto Presentation::create() -> void {
   cheatEditor.setIcon(Icon::Edit::Replace).setText("Cheat Editor ...").onActivate([&] { toolsWindow.show(1); });
   stateManager.setIcon(Icon::Application::FileManager).setText("State Manager ...").onActivate([&] { toolsWindow.show(2); });
   manifestViewer.setIcon(Icon::Emblem::Text).setText("Manifest Viewer ...").onActivate([&] { toolsWindow.show(3); });
-  netplayMenu.setText(tr("Netplay")).setEnabled(program.netplay.mode == 0);
-  startNetplayP1.setIcon(Icon::Prompt::Question).setText({tr("Start P1")}).onActivate([&] {
-    program.netplayStart(2, 0);
-  });
-  startNetplayP2.setIcon(Icon::Prompt::Question).setText({tr("Start P2")}).onActivate([&] {
-    program.netplayStart(2, 1);
-  });
-  startNetplayS1.setIcon(Icon::Prompt::Question).setText({tr("Start S1")}).onActivate([&] {
-    program.netplayStart(2, 2);
-  });
-  startNetplayS2.setIcon(Icon::Prompt::Question).setText({tr("Start S2")}).onActivate([&] {
-    program.netplayStart(2, 3);
-  });
-  startNetplayS3.setIcon(Icon::Prompt::Question).setText({tr("Start S3")}).onActivate([&] {
-    program.netplayStart(2, 4);
-  });
-  startNetplayS4.setIcon(Icon::Prompt::Question).setText({tr("Start S4")}).onActivate([&] {
-    program.netplayStart(2, 5);
-  });
-  startNetplayS5.setIcon(Icon::Prompt::Question).setText({tr("Start S5")}).onActivate([&] {
-    program.netplayStart(2, 6);
-  });
-  startNetplayS6.setIcon(Icon::Prompt::Question).setText({tr("Start S6")}).onActivate([&] {
-    program.netplayStart(2, 7);
-  });
-  stopNetplay.setIcon(Icon::Prompt::Question).setText({tr("Stop")}).onActivate([&] {
-    program.netplayStop();
+  netplayMenu.setText(tr("Netplay")).setVisible(false);
+  setupNetplay.setIcon(Icon::Device::Network).setText({tr("Setup")}).onActivate([&] {
+    if(program.netplay.mode != Program::Netplay::Inactive) {
+      MessageDialog("Please stop netplay before setting up a new session.")
+      .setTitle("Netplay Setup")
+      .setAlignment(*this)
+      .warning();
+      return;
+    }
+    netplayWindow.show();
   });
   stopNetplay.setIcon(Icon::Prompt::Question).setText({tr("Stop")}).onActivate([&] {
     program.netplayStop();

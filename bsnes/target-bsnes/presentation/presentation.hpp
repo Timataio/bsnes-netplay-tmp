@@ -118,14 +118,7 @@ struct Presentation : Window {
       MenuItem stateManager{&toolsMenu};
       MenuItem manifestViewer{&toolsMenu};
     Menu netplayMenu{&menuBar};
-        MenuItem startNetplayP1{&netplayMenu};
-        MenuItem startNetplayP2{&netplayMenu};
-        MenuItem startNetplayS1{&netplayMenu};
-        MenuItem startNetplayS2{&netplayMenu};
-        MenuItem startNetplayS3{&netplayMenu};
-        MenuItem startNetplayS4{&netplayMenu};
-        MenuItem startNetplayS5{&netplayMenu};
-        MenuItem startNetplayS6{&netplayMenu};
+        MenuItem setupNetplay{&netplayMenu};
         MenuItem stopNetplay{&netplayMenu};
     Menu helpMenu{&menuBar};
       MenuItem aboutSameBoy{&helpMenu};

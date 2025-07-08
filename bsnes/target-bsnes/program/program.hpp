@@ -90,7 +90,7 @@ struct Program : Lock, Emulator::Platform {
 
   // netplay.cpp
   struct Netplay {
-    enum Mode : uint { Inactive, Setup, Running } mode = Mode::Inactive;
+    enum Mode : uint { Inactive, Running } mode = Mode::Inactive;
     // rollback savestate  
     struct SaveState {
       ~SaveState() { clear(); }
@@ -124,11 +124,7 @@ struct Program : Lock, Emulator::Platform {
       uint8 id = 0;
       string nickname;
       struct connection {
-        string ip;
-        uint16 port = 0;
-        auto toString() -> string {
-          return string(ip, ":", port);
-        }
+        string addr;
       } conn;
     };
     struct Buttons {
@@ -156,12 +152,13 @@ struct Program : Lock, Emulator::Platform {
     vector<SaveState> states;
     vector<Buttons> inputs;
     vector<Peer> peers;
+    GekkoNetworkStats stats = {};
     GekkoConfig config = {};
     GekkoSession* session = nullptr;
     uint counter = 0;
   } netplay;
   auto netplayMode(Netplay::Mode) -> void;
-  auto netplayStart(uint8 numPlayers, uint8 local) -> void;
+  auto netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay, string remoteAddr, vector<string>& spectators ) -> void;
   auto netplayStop() -> void;
   auto netplayRun() -> bool;
   auto netplayPollLocalInput(Netplay::Buttons& localInput) -> void;

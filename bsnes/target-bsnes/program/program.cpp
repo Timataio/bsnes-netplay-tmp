@@ -45,6 +45,8 @@ auto Program::create() -> void {
   stateManager.create();
   manifestViewer.create();
 
+  netplayWindow.create();
+
   if(settings.general.crashed) {
     MessageDialog(
       "Driver crash detected. Hardware drivers have been disabled.\n"

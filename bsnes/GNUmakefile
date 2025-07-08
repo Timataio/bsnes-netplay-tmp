@@ -14,7 +14,7 @@ endif
 
 # binaries built with this flag are faster, but are not portable to multiple machines.
 ifeq ($(local),true)
-  flags += -march=native
+#  flags += -march=native
 endif
 
 nall.path := ../nall

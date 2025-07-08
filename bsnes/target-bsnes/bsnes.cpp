@@ -48,6 +48,7 @@ auto nall::main(Arguments arguments) -> void {
   Instances::cheatWindow.construct();
   Instances::stateWindow.construct();
   Instances::toolsWindow.construct();
+  Instances::netplayWindow.construct();
   emulator = new SuperFamicom::Interface;
   program.create();
 
@@ -58,4 +59,5 @@ auto nall::main(Arguments arguments) -> void {
   Instances::cheatWindow.destruct();
   Instances::stateWindow.destruct();
   Instances::toolsWindow.destruct();
+  Instances::netplayWindow.destruct();
 }
