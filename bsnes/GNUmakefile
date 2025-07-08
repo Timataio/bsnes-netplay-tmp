@@ -2,7 +2,7 @@ target := bsnes
 binary := application
 build := performance
 openmp := true
-local := false
+local := true
 flags += -I. -I..
 
 # in order for this to work, obj/lzma.o must be omitted or bsnes will hang on startup.
