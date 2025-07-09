@@ -1,19 +1,19 @@
 gekkonet.path ?= .
 
-gekkonet.src := \
-	src/gekkonet.cpp \
-	src/backend.cpp \
-	src/event.cpp \
-	src/gekko.cpp \
-	src/input.cpp \
-	src/net.cpp \
-	src/player.cpp \
-	src/storage.cpp \
+gekkonet.src :=\
+	src/gekkonet.cpp\
+	src/backend.cpp\
+	src/event.cpp\
+	src/gekko.cpp\
+	src/input.cpp\
+	src/net.cpp\
+	src/player.cpp\
+	src/storage.cpp\
 	src/sync.cpp
 
-gekkonet.include := \
-	-I$(gekkonet.path)/include \
-	-I$(gekkonet.path)/thirdparty \
+gekkonet.include :=\
+	-I$(gekkonet.path)/include\
+	-I$(gekkonet.path)/thirdparty\
 	-I$(gekkonet.path)/thirdparty/asio
 
 gekkonet.objects := $(gekkonet.src:src/%.cpp=obj/gekkonet-%.o)
