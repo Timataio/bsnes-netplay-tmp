@@ -1,5 +1,3 @@
-SHELL := /bin/bash
-
 gekkonet.path ?= .
 
 gekkonet.src := \
@@ -23,14 +21,21 @@ gekkonet.objects := $(gekkonet.src:src/%.cpp=obj/gekkonet-%.o)
 gekkonet.flags := $(gekkonet.include) -DGEKKONET_STATIC
 
 obj/gekkonet-%.o: $(gekkonet.path)/src/%.cpp
-	@echo "Compiling $<"
-	$(compiler) -c -o $@ $< $(gekkonet.flags)
+	@echo Compiling ../gekkonet/$(subst $(gekkonet.path)/,,$<) ...
+	@$(compiler) -c -o $@ $< $(gekkonet.flags)
 
 ifndef compiler
     $(error "compiler variable must be defined by the including Makefile")
 endif
 
 gekkonet.options :=
+
 ifeq ($(platform),windows)
     gekkonet.options += -lws2_32
+endif
+
+ifeq ($(platform),macos)
+endif
+
+ifeq ($(platform),linux)
 endif
