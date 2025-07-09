@@ -14,8 +14,7 @@ auto Program::netplayMode(Netplay::Mode mode) -> void {
     netplay.mode = mode;
 }
 
-auto Program::netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay, string remoteAddr, vector<string> &spectators) -> void
-{
+auto Program::netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay, string remoteAddr, vector<string> &spectators) -> void {
     if(netplay.mode != Netplay::Mode::Inactive) return;
 
     netplay.peers.reset();
@@ -35,7 +34,6 @@ auto Program::netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay
     netplay.config.max_spectators = spectators.size();
     netplay.config.input_prediction_window = rollback;
     netplay.config.spectator_delay = 90;
-    netplay.config.limited_saving = true;
 
     netplay.states.resize(netplay.config.input_prediction_window + 2);
 
@@ -109,6 +107,8 @@ auto Program::netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay
 
     netplay.poller.init(netplay.session);
     netplay.poller.start();
+
+    netplay.localDelay = delay;
 }
 
 auto Program::netplayStop() -> void {
@@ -136,11 +136,12 @@ auto Program::netplayRun() -> bool {
     netplay.counter++;
 
     netplay.poller.with_session([this](GekkoSession* session) {
-        if(gekko_frames_ahead(session) >= 1.0f && netplay.counter % 60 == 0) {
+        float framesAhead = gekko_frames_ahead(session);
+        if(framesAhead - netplay.localDelay >= 1.0f && netplay.counter % 180 == 0) {
             // rift syncing first attempt
             // kinda hacky. there's prolly a better way but im clueless.
             auto volume = Emulator::audio.volume();
-            Emulator::audio.setVolume(volume * 0.3f);
+            Emulator::audio.setVolume(volume * 0.25f);
             netplayHaltFrame();
             Emulator::audio.setVolume(volume);
             return true;
@@ -270,8 +271,7 @@ auto Program::netplayGetInput(uint port, uint button) -> int16 {
     }
 }
 
-auto Program::netplayHaltFrame() -> void
-{
+auto Program::netplayHaltFrame() -> void {
     auto state = emulator->serialize(0);
     emulator->run();
     state.setMode(serializer::Mode::Load);

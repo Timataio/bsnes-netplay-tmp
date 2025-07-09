@@ -119,7 +119,7 @@ struct Program : Lock, Emulator::Platform {
                 std::lock_guard<std::mutex> lock(session_mutex);
                 gekko_network_poll(session);
               }
-              std::this_thread::sleep_for(std::chrono::microseconds(250));
+              std::this_thread::sleep_for(std::chrono::milliseconds(1));
           }
       }
     } poller;
@@ -189,6 +189,7 @@ struct Program : Lock, Emulator::Platform {
     GekkoSession* session = nullptr;
     uint counter = 0;
     uint stallCounter = 0;
+    uint localDelay = 0;
   } netplay;
   auto netplayMode(Netplay::Mode) -> void;
   auto netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay, string remoteAddr, vector<string>& spectators ) -> void;
