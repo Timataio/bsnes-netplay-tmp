@@ -21,7 +21,6 @@ gekkonet.objects := $(gekkonet.src:src/%.cpp=obj/gekkonet-%.o)
 gekkonet.flags := $(gekkonet.include) -DGEKKONET_STATIC
 
 obj/gekkonet-%.o: $(gekkonet.path)/src/%.cpp
-	@mkdir -p $(dir $@) 
 	@echo Compiling ../gekkonet/$(subst $(gekkonet.path)/,,$<) ...
 	@$(compiler) -c -o $@ $< $(gekkonet.flags)
 
