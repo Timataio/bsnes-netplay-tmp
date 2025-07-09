@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 gekkonet.path ?= .
 
 gekkonet.src := \
@@ -21,6 +23,7 @@ gekkonet.objects := $(gekkonet.src:src/%.cpp=obj/gekkonet-%.o)
 gekkonet.flags := $(gekkonet.include) -DGEKKONET_STATIC
 
 obj/gekkonet-%.o: $(gekkonet.path)/src/%.cpp
+	@echo "Compiling $<"
 	$(compiler) -c -o $@ $< $(gekkonet.flags)
 
 ifndef compiler
