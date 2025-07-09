@@ -69,10 +69,10 @@ jobs:
         for program in bsnes
         do
           chmod +x ${bindir}/${program}-ubuntu/${program}
-          chmod +x ${bindir}/${program}-macos/${program}.app/Contents/MacOS/${program}
+          #chmod +x ${bindir}/${program}-macos/${program}.app/Contents/MacOS/${program}
         done
 
-        for os in ubuntu windows macos
+        for os in ubuntu windows #macos
         do
           mkdir "${os}"
           cd "${os}"
