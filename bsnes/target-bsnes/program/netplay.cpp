@@ -1,9 +1,15 @@
 auto Program::netplayMode(Netplay::Mode mode) -> void {
     if(netplay.mode == mode) return;
     if(mode == Netplay::Running) {
+        // be sure the contollers are connected
+        emulator->connect(0, 1);
+        emulator->connect(1, 1);
+        // disable input when unfocused
         inputSettings.blockInput.setChecked();
+        // we don't want entropy
         emulator->configure("Hacks/Entropy", "None");
-        if(emulator->loaded()) emulator->power();
+        // power cycle to match all peers
+        emulator->power();
     }
     netplay.mode = mode;
 }
