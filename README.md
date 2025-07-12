@@ -1,5 +1,22 @@
-bsnes
+bsnes-netplay
 =====
+**Note: This project is still a work in progress!**
+
+A custom build of the bsnes emulator, integrated with GekkoNet, to provide
+robust and low-latency netplay capabilities.
+
+Currently, it supports direct IP connections between two players. Port
+forwarding (or another solution, such as a VPN that simulates a Local-Area
+Network) is required.
+
+Spectating is also supported, also through direct connection.
+
+Support for more simultaneous players and other connection methods are currently
+in the works.
+
+[**Download the latest release of bsnes-netplay here.**](https://github.com/HeatXD/bsnes-netplay/releases)
+
+# Original bsnes project README.md:
 
 ![bsnes logo](bsnes/target-bsnes/resource/logo.png)
 
@@ -53,19 +70,20 @@ Standard Features
   - Multi-monitor support
   - Turbo support for controller inputs
 
-Links
+Links (Non-Netplay Build)
 -----
 
   - [Official git repository](https://github.com/bsnes-emu/bsnes)
   - [Official Discord](https://discord.gg/B27hf27ZVf)
 
-Nightly Builds
---------------
-
-  - [Windows](https://github.com/bsnes-emu/bsnes/releases/download/nightly/bsnes-windows.zip)
-  - [macOS](https://github.com/bsnes-emu/bsnes/releases/download/nightly/bsnes-macos.zip)
-  - [Linux](https://github.com/bsnes-emu/bsnes/releases/download/nightly/bsnes-ubuntu.zip)
-  - [FreeBSD](https://api.cirrus-ci.com/v1/artifact/github/bsnes-emu/bsnes/freebsd-x86_64-binaries/bsnes-nightly/bsnes-nightly.zip)
+<!-- Dummied out to avoid confusion: -->
+<!-- Nightly Builds -->
+<!-- -------------- -->
+<!---->
+<!--   - [Windows](https://github.com/bsnes-emu/bsnes/releases/download/nightly/bsnes-windows.zip) -->
+<!--   - [macOS](https://github.com/bsnes-emu/bsnes/releases/download/nightly/bsnes-macos.zip) -->
+<!--   - [Linux](https://github.com/bsnes-emu/bsnes/releases/download/nightly/bsnes-ubuntu.zip) -->
+<!--   - [FreeBSD](https://api.cirrus-ci.com/v1/artifact/github/bsnes-emu/bsnes/freebsd-x86_64-binaries/bsnes-nightly/bsnes-nightly.zip) -->
 
 Preview
 -------
