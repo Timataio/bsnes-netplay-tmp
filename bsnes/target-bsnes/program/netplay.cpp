@@ -14,7 +14,7 @@ auto Program::netplayMode(Netplay::Mode mode) -> void {
     netplay.mode = mode;
 }
 
-auto Program::netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay, string remoteAddr, vector<string> &spectators) -> void {
+auto Program::netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay, vector<string>& remotes, vector<string> &spectators) -> void {
     if(netplay.mode != Netplay::Mode::Inactive) return;
 
     netplay.peers.reset();
@@ -41,67 +41,67 @@ auto Program::netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay
     gekko_start(netplay.session, &netplay.config);
     gekko_net_adapter_set(netplay.session, gekko_default_adapter(port));
 
-    if(local == 0) {
-        auto peer1 = Netplay::Peer();
-        auto peer2 = Netplay::Peer();
+    // if(local == 0) {
+    //     auto peer1 = Netplay::Peer();
+    //     auto peer2 = Netplay::Peer();
 
-        peer1.id = gekko_add_actor(netplay.session, LocalPlayer, nullptr);
-        peer1.nickname = "P1";
-        peer1.conn.addr = "localhost";
+    //     peer1.id = gekko_add_actor(netplay.session, LocalPlayer, nullptr);
+    //     peer1.nickname = "P1";
+    //     peer1.conn.addr = "localhost";
 
-        peer2.nickname = "P2";
-        peer2.conn.addr = remoteAddr;
+    //     peer2.nickname = "P2";
+    //     peer2.conn.addr = remoteAddr;
         
-        auto remAddr = peer2.conn.addr;
-        auto remote = GekkoNetAddress{ (void*)remAddr.data(), remAddr.size() };
-        peer2.id = gekko_add_actor(netplay.session, RemotePlayer, &remote);
+    //     auto remAddr = peer2.conn.addr;
+    //     auto remote = GekkoNetAddress{ (void*)remAddr.data(), remAddr.size() };
+    //     peer2.id = gekko_add_actor(netplay.session, RemotePlayer, &remote);
 
-        netplay.peers.append(peer1);
-        netplay.peers.append(peer2);
+    //     netplay.peers.append(peer1);
+    //     netplay.peers.append(peer2);
 
-        // add the expected spectators
-        for(int i = 0; i < netplay.config.max_spectators; i++) {
-            auto specPeer = Netplay::Peer();
+    //     // add the expected spectators
+    //     for(int i = 0; i < netplay.config.max_spectators; i++) {
+    //         auto specPeer = Netplay::Peer();
             
-            specPeer.nickname = "Spectator";
-            specPeer.conn.addr = spectators[i];
+    //         specPeer.nickname = "Spectator";
+    //         specPeer.conn.addr = spectators[i];
         
-            auto specAddr = specPeer.conn.addr;
-            auto spec = GekkoNetAddress{ (void*)specAddr.data(), specAddr.size() };
-            specPeer.id = gekko_add_actor(netplay.session, Spectator, &spec);
+    //         auto specAddr = specPeer.conn.addr;
+    //         auto spec = GekkoNetAddress{ (void*)specAddr.data(), specAddr.size() };
+    //         specPeer.id = gekko_add_actor(netplay.session, Spectator, &spec);
 
-            netplay.peers.append(specPeer);
-        }
-    } else if (local == 1){
-        auto peer1 = Netplay::Peer();
-        auto peer2 = Netplay::Peer();
+    //         netplay.peers.append(specPeer);
+    //     }
+    // } else if (local == 1){
+    //     auto peer1 = Netplay::Peer();
+    //     auto peer2 = Netplay::Peer();
 
-        peer1.nickname = "P1";
-        peer1.conn.addr = remoteAddr;
+    //     peer1.nickname = "P1";
+    //     peer1.conn.addr = remoteAddr;
 
-        auto remAddr = peer1.conn.addr;
-        auto remote = GekkoNetAddress{ (void *)remAddr.data(), remAddr.size() };
-        peer1.id = gekko_add_actor(netplay.session, RemotePlayer, &remote);
+    //     auto remAddr = peer1.conn.addr;
+    //     auto remote = GekkoNetAddress{ (void *)remAddr.data(), remAddr.size() };
+    //     peer1.id = gekko_add_actor(netplay.session, RemotePlayer, &remote);
 
-        peer2.id = gekko_add_actor(netplay.session, LocalPlayer, nullptr);
-        peer2.nickname = "P2";
-        peer2.conn.addr = "localhost";
+    //     peer2.id = gekko_add_actor(netplay.session, LocalPlayer, nullptr);
+    //     peer2.nickname = "P2";
+    //     peer2.conn.addr = "localhost";
 
-        netplay.peers.append(peer1);
-        netplay.peers.append(peer2);
-    }else{
-        auto peer = Netplay::Peer();
+    //     netplay.peers.append(peer1);
+    //     netplay.peers.append(peer2);
+    // }else{
+    //     auto peer = Netplay::Peer();
 
-        peer.nickname = "P1";
-        peer.conn.addr = remoteAddr;
-        auto remAddr = peer.conn.addr;
-        auto remote = GekkoNetAddress{ (void *)remAddr.data(), remAddr.size() };
-        peer.id = gekko_add_actor(netplay.session, RemotePlayer, &remote);
+    //     peer.nickname = "P1";
+    //     peer.conn.addr = remoteAddr;
+    //     auto remAddr = peer.conn.addr;
+    //     auto remote = GekkoNetAddress{ (void *)remAddr.data(), remAddr.size() };
+    //     peer.id = gekko_add_actor(netplay.session, RemotePlayer, &remote);
 
-        netplay.peers.append(peer);
-    }
+    //     netplay.peers.append(peer);
+    // }
 
-    gekko_set_local_delay(netplay.session, local, delay);
+    // gekko_set_local_delay(netplay.session, local, delay);
 
     netplayMode(Netplay::Running);
 

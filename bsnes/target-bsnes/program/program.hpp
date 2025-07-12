@@ -192,7 +192,7 @@ struct Program : Lock, Emulator::Platform {
     uint localDelay = 0;
   } netplay;
   auto netplayMode(Netplay::Mode) -> void;
-  auto netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay, string remoteAddr, vector<string>& spectators ) -> void;
+  auto netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay, vector<string>& remotes, vector<string>& spectator) -> void;
   auto netplayStop() -> void;
   auto netplayRun() -> bool;
   auto netplayPollLocalInput(Netplay::Buttons& localInput) -> void;

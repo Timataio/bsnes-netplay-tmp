@@ -194,18 +194,23 @@ public:
 
 struct NetplayWindow : Window {
   struct Config {
+    bool multitap = false;
     uint16 localPort = 0;
     uint8 localPlayer = 0;
     uint8 rollbackframes = 8;
     uint8 localDelay = 1;
-    string remoteAddress = {};
+    uint8 spectatorPlayerCount = 0;
+    vector<string> remotes = {};
     vector<string> spectators = {};
   } config {};
 
   auto create() -> void;
   auto setVisible(bool visible = true) -> NetplayWindow&;
   auto show() -> void;
-
+private:
+  auto updateMultitap() -> void;
+  auto updateLocalController(uint8 port) -> void;
+  auto filterAddresses(vector<string>& addresses) -> vector<string>;
 public:
   VerticalLayout layout{this};
     HorizontalLayout gameSettingsLayout{&layout, Size{~0, 0}};
@@ -213,6 +218,7 @@ public:
       HorizontalSlider rollbackframeValue{&gameSettingsLayout, Size{~0, 0}};
       Label delayLabel{&gameSettingsLayout, Size{50_sx, 0}};
       HorizontalSlider delayValue{&gameSettingsLayout, Size{~0, 0}};
+      CheckLabel enableMultitap{&gameSettingsLayout, Size{0, 0}};
     HorizontalLayout playerSettingsLayout{&layout, Size{~0, 0}};
       Label portLabel{&playerSettingsLayout, Size{0, 0}};
       LineEdit portValue{&playerSettingsLayout, Size{~0, 0}};
@@ -221,10 +227,15 @@ public:
       RadioLabel specSelect{&playerLayout, Size{0, 0}};
       RadioLabel p1Select{&playerLayout, Size{0, 0}};
       RadioLabel p2Select{&playerLayout, Size{0, 0}};
-      Group playerGroup{&p1Select, &p2Select, &specSelect};
-    HorizontalLayout remoteLayout{&layout, Size{~0, 0}};
-      Label remoteLabel{&remoteLayout, Size{0, 0}};
-      LineEdit remoteAddressValue{&remoteLayout, Size{~0, 0}};
+      RadioLabel p3Select{&playerLayout, Size{0, 0}};
+      RadioLabel p4Select{&playerLayout, Size{0, 0}};
+      RadioLabel p5Select{&playerLayout, Size{0, 0}};
+      Group playerGroup{&specSelect, &p1Select, &p2Select, &p3Select, &p4Select, &p5Select};
+    HorizontalLayout specLayout{&layout, Size{~0, 0}};
+      Label specPlayerCountLabel{&specLayout, Size{0, 0}};
+      LineEdit specPlayerCountValue{&specLayout, Size{~0, 0}};
+    Label remoteLabel{&layout, Size{0, 0}};
+    TextEdit remoteValue{&layout, Size{~0, ~0}};
     Label spectatorLabel{&layout, Size{0, 0}};
     TextEdit spectatorValue{&layout, Size{~0, ~0}};
     HorizontalLayout buttonLayout{&layout, Size{~0, 0}};
