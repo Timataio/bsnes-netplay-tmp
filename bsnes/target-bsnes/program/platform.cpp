@@ -244,7 +244,13 @@ auto Program::videoFrame(const uint16* data, uint pitch, uint width, uint height
   if(current != previous) {
     previous = current;
     if(netplay.mode == Netplay::Running) {
-      showMessage({(int)netplay.stats.avg_ping," MS"});
+      string fmtPing = "";
+      for (auto& netStats : netplay.netStats) {
+        if(netStats.avg_ping == 0) continue;
+        if(fmtPing.size() > 0) fmtPing.append(" / ");
+        fmtPing.append((int)netStats.avg_ping);
+      }
+      showMessage({fmtPing," MS"});
       showFrameRate({frameCounter * (1 + emulator->frameSkip()), " FPS"});
     } else {
       showFrameRate({frameCounter * (1 + emulator->frameSkip()), " FPS"});
@@ -270,14 +276,14 @@ auto Program::inputPoll(uint port, uint device, uint input) -> int16 {
       value = mapping->poll();
     }
   }
-
+  
   if(netplay.mode == Netplay::Running) {
-    return netplayGetInput(port, input);
+    return netplayGetInput(port, device, input);
   }
 
   if(movie.mode == Movie::Mode::Recording) {
     movie.input.append(value);
-  } else if(movie.mode == Movie::Mode::Playing) {
+  } else if(movie.mode == Movie::Mode::Playing && netplay.mode == Netplay::Inactive) {
     if(movie.input) {
       value = movie.input.takeFirst();
     }

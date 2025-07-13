@@ -91,6 +91,7 @@ struct Program : Lock, Emulator::Platform {
   // netplay.cpp
   struct Netplay {
     enum Mode : uint { Inactive, Running } mode = Mode::Inactive;
+    enum Device : uint { Gamepad = 1, Multitap = 3};
     // network poller
     struct Poller {
       nall::thread pollThread;
@@ -179,12 +180,12 @@ struct Program : Lock, Emulator::Platform {
       } u;
     };
     enum SnesButton: uint {
-      Up, Down, Left, Right, B, A, Y, X, L, R, Select, Start,
+      Up, Down, Left, Right, B, A, Y, X, L, R, Select, Start, Count
     };
+    vector<GekkoNetworkStats> netStats;
     vector<SaveState> states;
     vector<Buttons> inputs;
     vector<Peer> peers;
-    GekkoNetworkStats stats = {};
     GekkoConfig config = {};
     GekkoSession* session = nullptr;
     uint counter = 0;
@@ -196,7 +197,7 @@ struct Program : Lock, Emulator::Platform {
   auto netplayStop() -> void;
   auto netplayRun() -> bool;
   auto netplayPollLocalInput(Netplay::Buttons& localInput) -> void;
-  auto netplayGetInput(uint port, uint button) -> int16;
+  auto netplayGetInput(uint port, uint device, uint button) -> int16;
   auto netplayHaltFrame() -> void;
 
   //video.cpp
