@@ -23,19 +23,21 @@ auto Program::netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay
     // add local player
     if(local < 5) numPlayers++;
 
-    for(int i = 0; i < numPlayers; i++) {
+    const int inpBufferLength = numPlayers > 2 ? 5 : numPlayers;
+    for(int i = 0; i < inpBufferLength; i++) {
         netplay.inputs.append(Netplay::Buttons());
     }
 
+    const int stateSize = emulator->serialize(0).size();
+
     netplay.config.num_players = numPlayers;
     netplay.config.input_size = sizeof(Netplay::Buttons);
-    netplay.config.state_size = sizeof(int32);
+    netplay.config.state_size = stateSize;
     netplay.config.max_spectators = spectators.size();
     netplay.config.input_prediction_window = rollback;
     netplay.config.spectator_delay = 90;
 
-    netplay.states.resize(netplay.config.input_prediction_window + 2);
-    netplay.netStats.resize(numPlayers);
+    netplay.netStats.resize(inpBufferLength);
 
     gekko_create(&netplay.session);
     gekko_start(netplay.session, &netplay.config);
@@ -108,7 +110,6 @@ auto Program::netplayStop() -> void {
 
     netplay.peers.reset();
     netplay.inputs.reset();
-    netplay.states.reset();
     netplay.netStats.reset();
 
     inputSettings.pauseEmulation.setChecked();
@@ -179,18 +180,15 @@ auto Program::netplayRun() -> bool {
             switch (ev->type) {
             case SaveEvent:
                 // save the state ourselves
-                serial = emulator->serialize(0);
-                frame = ev->data.save.frame % netplay.states.size();
-                netplay.states[frame].set(serial.data(), serial.size());
+                serial = emulator->serialize();
                 // pass the frame number so we can maybe use it later to get the right state
                 *ev->data.save.checksum = 0; // maybe can be helpful later.
-                *ev->data.save.state_len = sizeof(int32);
-                memcpy(ev->data.save.state, &ev->data.save.frame, sizeof(int32));
+                *ev->data.save.state_len = serial.size();
+                memcpy(ev->data.save.state, serial.data(), serial.size());
                 break;
             case LoadEvent:
                 //print("Load frame:", ev->data.load.frame, "\n");
-                frame = ev->data.load.frame % netplay.states.size();
-                serial = serializer(netplay.states[frame].data(), netplay.states[frame].size());
+                serial = serializer(ev->data.load.state, ev->data.load.state_len);
                 emulator->unserialize(serial);
                 program.mute |= Mute::Always;
                 emulator->setRunAhead(true);
@@ -214,7 +212,7 @@ auto Program::netplayRun() -> bool {
             netplay.stallCounter++;
             if (netplay.stallCounter > 10) program.mute |= Mute::Always;
         }else{
-            if(netplay.stallCounter > 10) program.mute &= ~Mute::Always;
+            program.mute &= ~Mute::Always;
             netplay.stallCounter = 0;
         }
 
