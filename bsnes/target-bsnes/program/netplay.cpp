@@ -84,7 +84,7 @@ auto Program::netplayStart(uint16 port, uint8 local, uint8 rollback, uint8 delay
         peer.nickname = "P1";
         peer.conn.addr = remotes[0];
         auto remote = GekkoNetAddress{ (void*)peer.conn.addr.data(), peer.conn.addr.size() };
-        peer.id = gekko_add_actor(netplay.session, RemotePlayer, &remote);
+        peer.id = gekko_add_actor(netplay.session, Spectator, &remote);
         netplay.peers.append(peer);
     }
 
